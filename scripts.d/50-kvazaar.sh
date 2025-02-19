@@ -1,22 +1,20 @@
 #!/bin/bash
 
-LIBXML2_REPO="https://gitlab.gnome.org/GNOME/libxml2.git"
-LIBXML2_COMMIT="dea91c97debeac7c1aaf9c19f79029809e23a353"
+SCRIPT_REPO="https://github.com/ultravideo/kvazaar.git"
+SCRIPT_COMMIT="b0ed0f97680776214ea668aad9e57978d1433e0e"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$LIBXML2_REPO" "$LIBXML2_COMMIT" libxml2
-    cd libxml2
+    ./autogen.sh
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
-        --without-python
-        --disable-maintainer-mode
         --disable-shared
         --enable-static
+        --with-pic
     )
 
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
@@ -28,15 +26,18 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
-    ./autogen.sh "${myconf[@]}"
+    ./configure "${myconf[@]}"
     make -j$(nproc)
     make install
+
+    echo "Cflags.private: -DKVZ_STATIC_LIB" >> "$FFBUILD_PREFIX"/lib/pkgconfig/kvazaar.pc
+    echo "Libs.private: -lpthread" >> "$FFBUILD_PREFIX"/lib/pkgconfig/kvazaar.pc
 }
 
 ffbuild_configure() {
-    echo --enable-libxml2
+    echo --enable-libkvazaar
 }
 
 ffbuild_unconfigure() {
-    echo --disable-libxml2
+    echo --disable-libkvazaar
 }

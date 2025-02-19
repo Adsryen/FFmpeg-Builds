@@ -1,19 +1,14 @@
 #!/bin/bash
 
-FONTCONFIG_SRC="https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.94.tar.xz"
+SCRIPT_REPO="https://gitlab.freedesktop.org/fontconfig/fontconfig.git"
+SCRIPT_COMMIT="b7a8338f1933a6ac933389000d5160e9c30ccedd"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    mkdir fc
-    cd fc
-
-    wget "$FONTCONFIG_SRC" -O fc.tar.gz
-    tar xaf fc.tar.gz
-    rm fc.tar.gz
-    cd fontconfig*
+    ./autogen.sh --noconf
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
@@ -24,7 +19,13 @@ ffbuild_dockerbuild() {
         --enable-static
     )
 
-    if [[ $TARGET == win* || $TARGET == linux* ]]; then
+    if [[ $TARGET == linux* ]]; then
+        myconf+=(
+            --sysconfdir=/etc
+            --localstatedir=/var
+            --host="$FFBUILD_TOOLCHAIN"
+        )
+    elif [[ $TARGET == win* ]]; then
         myconf+=(
             --host="$FFBUILD_TOOLCHAIN"
         )

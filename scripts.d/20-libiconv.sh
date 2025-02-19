@@ -1,17 +1,25 @@
 #!/bin/bash
 
-# https://ftp.gnu.org/gnu/libiconv/
-ICONV_SRC="https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.16.tar.gz"
+SCRIPT_REPO="https://git.savannah.gnu.org/git/libiconv.git"
+SCRIPT_COMMIT="bc17565f9a4caca27161609c526b776287a8270e"
+
+SCRIPT_REPO2="https://git.savannah.gnu.org/git/gnulib.git"
+SCRIPT_COMMIT2="30fcbcc4db4973f84999a00c30e490e39989e96e"
 
 ffbuild_enabled() {
     return 0
 }
 
+ffbuild_dockerdl() {
+    echo "retry-tool sh -c \"rm -rf iconv && git clone '$SCRIPT_REPO' iconv\" && git -C iconv checkout \"$SCRIPT_COMMIT\""
+    echo "cd iconv && retry-tool sh -c \"rm -rf gnulib && git clone '$SCRIPT_REPO2' gnulib\" && git -C gnulib checkout \"$SCRIPT_COMMIT2\" && rm -rf gnulib/.git"
+}
+
 ffbuild_dockerbuild() {
-    wget -O iconv.tar.gz "$ICONV_SRC"
-    tar xaf iconv.tar.gz
-    rm iconv.tar.gz
-    cd libiconv*
+    # No automake 1.17 packaged anywhere yet.
+    sed -i 's/-1.17/-1.16/' Makefile.devel
+
+    (unset CC CFLAGS GMAKE && ./autogen.sh)
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"

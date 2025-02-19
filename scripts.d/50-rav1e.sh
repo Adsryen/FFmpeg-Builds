@@ -1,7 +1,7 @@
 #!/bin/bash
 
-RAV1E_REPO="https://github.com/xiph/rav1e.git"
-RAV1E_COMMIT="9417a4df1069cc066d499e04b9130ffd32019ed1"
+SCRIPT_REPO="https://github.com/xiph/rav1e.git"
+SCRIPT_COMMIT="62b4888672aa5c1c8084a8114f999c0699e08080"
 
 ffbuild_enabled() {
     [[ $TARGET == win32 ]] && return -1
@@ -9,23 +9,24 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$RAV1E_REPO" "$RAV1E_COMMIT" rav1e
-    cd rav1e
-
     local myconf=(
-        --prefix="$FFBUILD_PREFIX" \
-        --library-type=staticlib \
-        --crt-static \
+        --prefix="$FFBUILD_PREFIX"
+        --target="${FFBUILD_RUST_TARGET}"
+        --library-type=staticlib
+        --crt-static
         --release
     )
 
-    if [[ -n "$FFBUILD_RUST_TARGET" ]]; then
-        myconf+=(
-            --target="$FFBUILD_RUST_TARGET"
-        )
-    fi
+    # Pulls in target-libs for host tool builds otherwise.
+    # Luckily no target libraries are needed.
+    unset PKG_CONFIG_LIBDIR
 
-    cargo cinstall "${myconf[@]}"
+    # The pinned version is broken, and upstream does not react
+    cargo update cc
+
+    cargo cinstall -v "${myconf[@]}"
+
+    chmod 644 "${FFBUILD_PREFIX}"/lib/*rav1e*
 }
 
 ffbuild_configure() {

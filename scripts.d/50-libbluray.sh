@@ -1,16 +1,13 @@
 #!/bin/bash
 
-LIBBLURAY_REPO="https://code.videolan.org/videolan/libbluray.git"
-LIBBLURAY_COMMIT="060d8f055f2ed1b4752340be5d16403bad5ccdc0"
+SCRIPT_REPO="https://code.videolan.org/videolan/libbluray.git"
+SCRIPT_COMMIT="bb5bc108ec695889855f06df338958004ff289ef"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$LIBBLURAY_REPO" "$LIBBLURAY_COMMIT" libbluray
-    cd libbluray
-
     ./bootstrap
 
     local myconf=(
@@ -35,6 +32,8 @@ ffbuild_dockerbuild() {
         echo "Unknown target"
         return -1
     fi
+
+    export CPPFLAGS="${CPPFLAGS} -Ddec_init=libbr_dec_init"
 
     ./configure "${myconf[@]}"
     make -j$(nproc)

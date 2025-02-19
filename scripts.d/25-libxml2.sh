@@ -1,23 +1,19 @@
 #!/bin/bash
 
-MFX_REPO="https://github.com/lu-zero/mfx_dispatch.git"
-MFX_COMMIT="7e4d221c36c630c1250b23a5dfa15657bc04c10c"
+SCRIPT_REPO="https://github.com/GNOME/libxml2.git"
+SCRIPT_COMMIT="62d4697db6268b71e36ef8fda708953cadf4082a"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$MFX_REPO" "$MFX_COMMIT" mfx
-    cd mfx
-
-    autoreconf -i
-
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
+        --without-python
+        --disable-maintainer-mode
         --disable-shared
         --enable-static
-        --with-pic
     )
 
     if [[ $TARGET == win* || $TARGET == linux* ]]; then
@@ -29,15 +25,15 @@ ffbuild_dockerbuild() {
         return -1
     fi
 
-    ./configure "${myconf[@]}"
+    ./autogen.sh "${myconf[@]}"
     make -j$(nproc)
     make install
 }
 
 ffbuild_configure() {
-    echo --enable-libmfx
+    echo --enable-libxml2
 }
 
 ffbuild_unconfigure() {
-    echo --disable-libmfx
+    echo --disable-libxml2
 }

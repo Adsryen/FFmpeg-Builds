@@ -1,24 +1,22 @@
 #!/bin/bash
 
-OPENH264_REPO="https://github.com/cisco/openh264.git"
-OPENH264_COMMIT="40913c2a3a10fa3b8dc9e7685214ba1bf19fd11b"
+SCRIPT_REPO="https://github.com/cisco/openh264.git"
+SCRIPT_COMMIT="cf3b514ba34a3a6c4f14b3ae8714325dd30bfa08"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$OPENH264_REPO" "$OPENH264_COMMIT" openh264
-    cd openh264
-
     local myconf=(
         PREFIX="$FFBUILD_PREFIX"
+        INCLUDE_PREFIX="$FFBUILD_PREFIX"/include/wels
         BUILDTYPE=Release
         DEBUGSYMBOLS=False
         LIBDIR_NAME=lib
-        CC="$FFBUILD_CROSS_PREFIX"gcc
-        CXX="$FFBUILD_CROSS_PREFIX"g++
-        AR="$FFBUILD_CROSS_PREFIX"ar
+        CC="$CC"
+        CXX="$CXX"
+        AR="$AR"
     )
 
     if [[ $TARGET == win32 ]]; then
@@ -31,10 +29,20 @@ ffbuild_dockerbuild() {
             OS=mingw_nt
             ARCH=x86_64
         )
+    elif [[ $TARGET == winarm64 ]]; then
+        myconf+=(
+            OS=mingw_nt
+            ARCH=aarch64
+        )
     elif [[ $TARGET == linux64 ]]; then
         myconf+=(
             OS=linux
             ARCH=x86_64
+        )
+    elif [[ $TARGET == linuxarm64 ]]; then
+        myconf+=(
+            OS=linux
+            ARCH=aarch64
         )
     else
         echo "Unknown target"

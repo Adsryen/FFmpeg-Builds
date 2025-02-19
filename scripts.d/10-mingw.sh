@@ -1,7 +1,7 @@
 #!/bin/bash
 
-MINGW_REPO="https://github.com/mirror/mingw-w64.git"
-MINGW_COMMIT="a2eb3ea3aaa7c780c4b4ab30d71169f442788864"
+SCRIPT_REPO="https://git.code.sf.net/p/mingw-w64/mingw-w64.git"
+SCRIPT_COMMIT="6cda373a9ee66f3c26ca96198e68a9e33d58dea8"
 
 ffbuild_enabled() {
     [[ $TARGET == win* ]] || return -1
@@ -9,17 +9,22 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerlayer() {
-    to_df "COPY --from=${SELFLAYER} /opt/mingw/. /"
-    to_df "COPY --from=${SELFLAYER} /opt/mingw/. /opt/mingw"
+    [[ $TARGET == winarm* ]] && return 0
+    to_df "COPY --link --from=${SELFLAYER} /opt/mingw/. /"
+    to_df "COPY --link --from=${SELFLAYER} /opt/mingw/. /opt/mingw"
 }
 
 ffbuild_dockerfinal() {
+    [[ $TARGET == winarm* ]] && return 0
     to_df "COPY --from=${PREVLAYER} /opt/mingw/. /"
 }
 
+ffbuild_dockerdl() {
+    echo "retry-tool sh -c \"rm -rf mingw && git clone '$SCRIPT_REPO' mingw\" && cd mingw && git checkout \"$SCRIPT_COMMIT\""
+}
+
 ffbuild_dockerbuild() {
-    git-mini-clone "$MINGW_REPO" "$MINGW_COMMIT" mingw
-    cd mingw
+    [[ $TARGET == winarm* ]] && return 0
 
     cd mingw-w64-headers
 
@@ -28,10 +33,15 @@ ffbuild_dockerbuild() {
     unset LDFLAGS
     unset PKG_CONFIG_LIBDIR
 
+    if [[ -z "$COMPILER_SYSROOT" ]]; then
+        COMPILER_SYSROOT="$(${CC} -print-sysroot)/usr/${FFBUILD_TOOLCHAIN}"
+    fi
+
     local myconf=(
-        --prefix="/usr/$FFBUILD_TOOLCHAIN"
+        --prefix="$COMPILER_SYSROOT"
         --host="$FFBUILD_TOOLCHAIN"
         --with-default-win32-winnt="0x601"
+        --with-default-msvcrt=ucrt
         --enable-idl
     )
 
@@ -42,7 +52,7 @@ ffbuild_dockerbuild() {
     cd ../mingw-w64-libraries/winpthreads
 
     local myconf=(
-        --prefix="/usr/$FFBUILD_TOOLCHAIN"
+        --prefix="$COMPILER_SYSROOT"
         --host="$FFBUILD_TOOLCHAIN"
         --with-pic
         --disable-shared

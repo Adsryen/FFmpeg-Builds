@@ -1,22 +1,18 @@
 #!/bin/bash
 
-XZ_SRC="https://sourceforge.net/projects/lzmautils/files/xz-5.2.5.tar.xz/download"
+SCRIPT_REPO="https://github.com/tukaani-project/xz.git"
+SCRIPT_COMMIT="353c33355cb12e5016d49052fd1e90d15568aa37"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    mkdir xz
-    cd xz
-
-    wget "$XZ_SRC" -O xz.tar.xz
-    tar xaf xz.tar.xz
-    rm xz.tar.xz
-    cd xz*
+    ./autogen.sh --no-po4a --no-doxygen
 
     local myconf=(
         --prefix="$FFBUILD_PREFIX"
+        --disable-symbol-versions
         --disable-shared
         --enable-static
         --with-pic

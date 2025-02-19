@@ -1,22 +1,21 @@
 #!/bin/bash
 
-SRT_REPO="https://github.com/Haivision/srt.git"
-SRT_COMMIT="d9b7988347fdbd4c9e1ae7fdc3b0bb3080aa8ae1"
+SCRIPT_REPO="https://github.com/Haivision/srt.git"
+SCRIPT_COMMIT="5cd2414fee01f6dbca167e0c63bbf28ad9b4eccd"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$SRT_REPO" "$SRT_COMMIT" srt
-    cd srt
-
     mkdir build && cd build
 
     cmake -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" \
-        -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DENABLE_ENCRYPTION=ON -DENABLE_APPS=OFF ..
+        -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DENABLE_CXX_DEPS=ON -DUSE_STATIC_LIBSTDCXX=ON -DENABLE_ENCRYPTION=ON -DENABLE_APPS=OFF ..
     make -j$(nproc)
     make install
+
+    echo "Libs.private: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/srt.pc
 }
 
 ffbuild_configure() {
